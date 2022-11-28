@@ -1,0 +1,6 @@
+schema: "src/schema.graphql"
+documents: "src/**/*.{graphql,js,ts,jsx,tsx}"
+extensions:
+  endpoints:
+    example:
+      url: "http://localhost:8000"
