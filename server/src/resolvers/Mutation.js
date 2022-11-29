@@ -6,6 +6,7 @@ const { GraphQLError } = require('graphql')
 const jwt = require('jsonwebtoken')
 
 const checks = require('../checks')
+const pubsubMsgs = require('../pubsubMsgs')
 
 async function signup(root, { email, password, name }, { prisma }) {
   const hashedPassword = await bcrypt.hash(password, conf.PASSWORD_HASH_ROUNDS)
@@ -35,16 +36,48 @@ async function login(root, { email, password }, { prisma }) {
   return token
 }
 
-async function post(root, { url, description }, { prisma, userId }) {
+async function post(root, { url, description }, { prisma, userId, pubsub }) {
   checks.authenticated(userId)
 
-  return prisma.link.create({ data: { url, description, authorId: userId } })
+  const link = await prisma.link.create({
+    data: { url, description, authorId: userId },
+  })
+
+  pubsub.publish(pubsubMsgs.LINK_ADDED, link)
+
+  return link
+}
+
+async function vote(root, { linkId: ID }, { userId, prisma, pubsub }) {
+  checks.authenticated(userId)
+
+  const linkId = parseInt(ID, 10)
+  // eslint-disable-next-line no-shadow
+  let vote = null
+
+  try {
+    vote = await prisma.vote.create({ data: { linkId, userId } })
+  } catch (e) {
+    if (e.code !== 'P2002') throw e
+
+    throw new GraphQLError("you've already voted on this link", {
+      extensions: {
+        code: 'Conflict',
+        http: { status: 409 },
+      },
+    })
+  }
+
+  pubsub.publish(pubsubMsgs.VOTE_ADDED, vote)
+
+  return vote
 }
 
 const Mutation = {
   signup,
   login,
   post,
+  vote,
 }
 
 module.exports = Mutation

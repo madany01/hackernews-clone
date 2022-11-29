@@ -34,7 +34,19 @@ const links = [
   },
 ]
 
+const votes = [
+  ['ahmad', 1],
+  ['ahmad', 2],
+  ['ahmad', 3],
+
+  ['robin', 0],
+
+  ['alex', 0],
+]
+
 async function main() {
+  await prisma.vote.deleteMany()
+  await prisma.link.deleteMany()
   await prisma.user.deleteMany()
 
   const hashedPasswords = await Promise.all(
@@ -65,8 +77,18 @@ async function main() {
       )
   )
 
+  const dbVotes = await Promise.all(
+    votes
+      .map(([userName, linkIdx]) => ({
+        userId: userByName[userName].id,
+        linkId: dbLinks[linkIdx].id,
+      }))
+      .map(v => prisma.vote.create({ data: v }))
+  )
+
   console.log(dbUsers)
   console.log(dbLinks)
+  console.log(dbVotes)
 }
 
 ;(async () => {

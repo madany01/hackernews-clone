@@ -2,12 +2,10 @@ const conf = require('../conf')
 // eslint-disable-next-line import/order
 const jwt = require('jsonwebtoken')
 
-function getJwtPayload(req) {
-  const authHeader = req?.headers?.authorization
-
+function getJwtPayload(authHeader) {
   if (!authHeader) return null
 
-  const [type, token] = authHeader.split(' ')
+  const [type, token] = String(authHeader).split(' ')
 
   if (!type || !token) return null
 
