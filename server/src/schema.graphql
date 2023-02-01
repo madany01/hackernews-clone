@@ -1,6 +1,16 @@
+enum Sort {
+  asc
+  desc
+}
+
+input FeedSort {
+  description: Sort
+  createdAt: Sort
+}
+
 type Query {
   info: String!
-  feed: [Link!]!
+  feed(filter: String, skip: Int, take: Int, sort: FeedSort): Feed!
 }
 
 type Mutation {
@@ -13,6 +23,11 @@ type Mutation {
 type Subscription {
   linkAdded: Link!
   voteAdded: Vote!
+}
+
+type Feed {
+  links: [Link!]!
+  count: Int!
 }
 
 type User {
